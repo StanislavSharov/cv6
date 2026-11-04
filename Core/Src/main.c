@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "i2c.h"
 
 /* USER CODE END Includes */
 
@@ -42,6 +43,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+/* Temporary hardware check: HTS221 WHO_AM_I should be 0xBC. */
+volatile I2C_Status hts221_test_status = I2C_TIMEOUT;
+volatile uint8_t hts221_test_id = 0U;
 
 /* USER CODE END PV */
 
@@ -91,6 +95,9 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  uint8_t sensor_id = 0U;
+  hts221_test_status = I2C_ReadRegister(0x5FU, 0x0FU, &sensor_id);
+  hts221_test_id = sensor_id;
 
   /* USER CODE END 2 */
 
