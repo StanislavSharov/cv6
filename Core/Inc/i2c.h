@@ -16,6 +16,10 @@ typedef enum
 /* device_address is the unshifted 7-bit I2C address. */
 I2C_Status I2C_WriteRegister(uint8_t device_address, uint8_t register_address,
                              uint8_t value);
+/* Writes 1..254 data bytes in one I2C transaction after the register address.
+ * The caller supplies any sensor-specific auto-increment bit in register_address. */
+I2C_Status I2C_WriteRegisters(uint8_t device_address, uint8_t register_address,
+                              const uint8_t *data, uint8_t length);
 /* Reads one byte after sending the register address with a repeated START. */
 I2C_Status I2C_ReadRegister(uint8_t device_address, uint8_t register_address,
                             uint8_t *value);
