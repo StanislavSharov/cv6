@@ -89,9 +89,16 @@ I2C_Status I2C_WriteRegisters(uint8_t device_address, uint8_t register_address,
 I2C_Status I2C_ReadRegister(uint8_t device_address, uint8_t register_address,
                             uint8_t *value)
 {
-  I2C_Status status;
+  return I2C_ReadRegisters(device_address, register_address, value, 1U);
+}
 
-  if (device_address > 0x7FU || value == NULL)
+I2C_Status I2C_ReadRegisters(uint8_t device_address, uint8_t register_address,
+                             uint8_t *data, uint8_t length)
+{
+  I2C_Status status;
+  uint8_t index;
+
+  if (device_address > 0x7FU || data == NULL || length == 0U)
   {
     return I2C_INVALID_ARGUMENT;
   }
@@ -115,13 +122,19 @@ I2C_Status I2C_ReadRegister(uint8_t device_address, uint8_t register_address,
   if (status == I2C_OK)
   {
     LL_I2C_HandleTransfer(I2C1, (uint32_t)device_address << 1U,
-                          LL_I2C_ADDRSLAVE_7BIT, 1U, LL_I2C_MODE_AUTOEND,
+                          LL_I2C_ADDRSLAVE_7BIT, length, LL_I2C_MODE_AUTOEND,
                           LL_I2C_GENERATE_START_READ);
+  }
+  for (index = 0U; index < length && status == I2C_OK; ++index)
+  {
     status = wait_for_flag(I2C_ISR_RXNE);
+    if (status == I2C_OK)
+    {
+      data[index] = LL_I2C_ReceiveData8(I2C1);
+    }
   }
   if (status == I2C_OK)
   {
-    *value = LL_I2C_ReceiveData8(I2C1);
     status = wait_for_flag(I2C_ISR_STOPF);
   }
 

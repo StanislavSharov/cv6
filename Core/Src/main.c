@@ -46,6 +46,8 @@
 /* Temporary hardware check: HTS221 WHO_AM_I should be 0xBC. */
 volatile I2C_Status hts221_test_status = I2C_TIMEOUT;
 volatile uint8_t hts221_test_id = 0U;
+volatile I2C_Status hts221_calibration_status = I2C_TIMEOUT;
+volatile uint8_t hts221_calibration_bytes[2] = {0U, 0U};
 
 /* USER CODE END PV */
 
@@ -98,6 +100,15 @@ int main(void)
   uint8_t sensor_id = 0U;
   hts221_test_status = I2C_ReadRegister(0x5FU, 0x0FU, &sensor_id);
   hts221_test_id = sensor_id;
+  if (hts221_test_status == I2C_OK && sensor_id == 0xBCU)
+  {
+    uint8_t calibration[2] = {0U, 0U};
+    /* HTS221 SUB bit 7 enables register address auto-increment. */
+    hts221_calibration_status = I2C_ReadRegisters(0x5FU, 0x30U | 0x80U,
+                                                  calibration, 2U);
+    hts221_calibration_bytes[0] = calibration[0];
+    hts221_calibration_bytes[1] = calibration[1];
+  }
 
   /* USER CODE END 2 */
 
