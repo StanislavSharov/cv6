@@ -1,0 +1,4 @@
+../Core/Src/hts221/hts221.c:5:16:signed_le16	1
+../Core/Src/hts221/hts221.c:10:19:HTS221_Init	18
+../Core/Src/hts221/hts221.c:117:22:HTS221_ReadTemperature	7
+../Core/Src/hts221/hts221.c:158:22:HTS221_ReadHumidity	9

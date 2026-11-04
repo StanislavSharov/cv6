@@ -24,6 +24,8 @@
 #include "i2c.h"
 #include "sensor_io.h"
 #include "hts221/hts221.h"
+#include "lps25hb/lps25hb.h"
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -47,12 +49,18 @@
 /* USER CODE BEGIN PV */
 static SensorIO sensor_io = {0};
 static HTS221_Device hts221 = {0};
+static LPS25HB_Device lps25hb = {0};
 volatile HTS221_InitStatus hts221_init_status = HTS221_INIT_IO_ERROR;
-/* Temporary hardware check: HTS221 WHO_AM_I should be 0xBC. */
-volatile I2C_Status hts221_test_status = I2C_TIMEOUT;
-volatile uint8_t hts221_test_id = 0U;
-volatile I2C_Status hts221_calibration_status = I2C_TIMEOUT;
-volatile uint8_t hts221_calibration_bytes[2] = {0U, 0U};
+volatile HTS221_MeasureStatus hts221_temperature_status = HTS221_MEASURE_NOT_READY;
+volatile HTS221_MeasureStatus hts221_humidity_status = HTS221_MEASURE_NOT_READY;
+volatile LPS25HB_Status lps25hb_init_status = LPS25HB_IO_ERROR;
+volatile LPS25HB_Status lps25hb_pressure_status = LPS25HB_NOT_READY;
+volatile float hts221_temperature_c = 0.0f;
+volatile float hts221_humidity_rh = 0.0f;
+volatile float lps25hb_pressure_hpa = 0.0f;
+volatile float relative_altitude_m = 0.0f;
+static float reference_pressure_hpa = 0.0f;
+static uint8_t have_temperature = 0U, have_humidity = 0U, have_pressure = 0U;
 
 /* USER CODE END PV */
 
@@ -67,6 +75,38 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void USART2_SendText(const char *text)
+{
+  while (*text != '\0')
+  {
+    while (!LL_USART_IsActiveFlag_TXE(USART2)) { }
+    LL_USART_TransmitData8(USART2, (uint8_t)*text++);
+  }
+  while (!LL_USART_IsActiveFlag_TC(USART2)) { }
+}
+
+/* Format fixed decimal values without depending on printf float support. */
+static long rounded_fixed(float value, float scale)
+{
+  float scaled = value * scale;
+  return (long)(scaled + (scaled >= 0.0f ? 0.5f : -0.5f));
+}
+
+static void USART2_SendMeasurements(void)
+{
+  char line[96];
+  long t = rounded_fixed(hts221_temperature_c, 10.0f);
+  long h = rounded_fixed(hts221_humidity_rh, 1.0f);
+  long p = rounded_fixed(lps25hb_pressure_hpa, 100.0f);
+  long a = rounded_fixed(relative_altitude_m, 100.0f);
+  unsigned long ta = (unsigned long)(t < 0 ? -t : t);
+  unsigned long aa = (unsigned long)(a < 0 ? -a : a);
+  (void)snprintf(line, sizeof line, "%s%lu.%lu,%ld,%ld.%02ld,%s%lu.%02lu\r\n",
+                 t < 0 ? "-" : "", ta / 10UL, ta % 10UL, h,
+                 p / 100L, p % 100L, a < 0 ? "-" : "",
+                 aa / 100UL, aa % 100UL);
+  USART2_SendText(line);
+}
 
 /* USER CODE END 0 */
 
@@ -102,22 +142,10 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t sensor_id = 0U;
+  uint32_t last_sample_tick = HAL_GetTick();
   SensorIO_Register(&sensor_io, I2C_ReadRegisters, I2C_WriteRegisters);
-  hts221_test_status = SensorIO_Read(&sensor_io, 0x5FU, 0x0FU,
-                                     &sensor_id, 1U);
-  hts221_test_id = sensor_id;
-  if (hts221_test_status == I2C_OK && sensor_id == 0xBCU)
-  {
-    uint8_t calibration[2] = {0U, 0U};
-    /* HTS221 SUB bit 7 enables register address auto-increment. */
-    hts221_calibration_status = SensorIO_Read(&sensor_io, 0x5FU,
-                                               0x30U | 0x80U,
-                                               calibration, 2U);
-    hts221_calibration_bytes[0] = calibration[0];
-    hts221_calibration_bytes[1] = calibration[1];
-  }
   hts221_init_status = HTS221_Init(&hts221, &sensor_io);
+  lps25hb_init_status = LPS25HB_Init(&lps25hb, &sensor_io);
 
   /* USER CODE END 2 */
 
@@ -128,6 +156,40 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if ((HAL_GetTick() - last_sample_tick) >= 1000U)
+    {
+      float value;
+      last_sample_tick = HAL_GetTick();
+      if (hts221_init_status == HTS221_INIT_OK)
+      {
+        hts221_temperature_status = HTS221_ReadTemperature(&hts221, &value);
+        if (hts221_temperature_status == HTS221_MEASURE_OK)
+        {
+          hts221_temperature_c = value;
+          have_temperature = 1U;
+        }
+        hts221_humidity_status = HTS221_ReadHumidity(&hts221, &value);
+        if (hts221_humidity_status == HTS221_MEASURE_OK)
+        {
+          hts221_humidity_rh = value;
+          have_humidity = 1U;
+        }
+      }
+      if (lps25hb_init_status == LPS25HB_OK)
+      {
+        lps25hb_pressure_status = LPS25HB_ReadPressure(&lps25hb, &value);
+        if (lps25hb_pressure_status == LPS25HB_OK && value > 0.0f)
+        {
+          lps25hb_pressure_hpa = value;
+          if (reference_pressure_hpa == 0.0f) reference_pressure_hpa = value;
+          relative_altitude_m = LPS25HB_RelativeAltitude(value,
+                                                          reference_pressure_hpa);
+          have_pressure = 1U;
+        }
+      }
+      if (have_temperature && have_humidity && have_pressure)
+        USART2_SendMeasurements();
+    }
   }
   /* USER CODE END 3 */
 }

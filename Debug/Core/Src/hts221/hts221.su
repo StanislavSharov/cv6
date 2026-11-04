@@ -1,0 +1,4 @@
+../Core/Src/hts221/hts221.c:5:16:signed_le16	16	static
+../Core/Src/hts221/hts221.c:10:19:HTS221_Init	48	static
+../Core/Src/hts221/hts221.c:117:22:HTS221_ReadTemperature	32	static
+../Core/Src/hts221/hts221.c:158:22:HTS221_ReadHumidity	40	static
