@@ -34,7 +34,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_cortex.h \
  ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_utils.h \
  ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_pwr.h \
- ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_dma.h ../Core/Inc/i2c.h
+ ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_dma.h ../Core/Inc/i2c.h \
+ ../Core/Inc/sensor_io.h ../Core/Inc/i2c.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal.h:
 ../Core/Inc/stm32f3xx_hal_conf.h:
@@ -72,4 +73,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_utils.h:
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_pwr.h:
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_dma.h:
+../Core/Inc/i2c.h:
+../Core/Inc/sensor_io.h:
 ../Core/Inc/i2c.h:

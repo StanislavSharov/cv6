@@ -1,0 +1,3 @@
+../Core/Src/sensor_io.c:5:12:SensorIO_Register	24	static
+../Core/Src/sensor_io.c:18:12:SensorIO_Read	32	static
+../Core/Src/sensor_io.c:28:12:SensorIO_Write	32	static

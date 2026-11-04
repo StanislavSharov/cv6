@@ -14,5 +14,7 @@
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_i2c.h:2225:25:LL_I2C_ReceiveData8	1
 ../Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_i2c.h:2237:22:LL_I2C_TransmitData8	1
 ../Core/Src/i2c.c:8:19:wait_for_flag	7
-../Core/Src/i2c.c:38:12:I2C_WriteRegister	8
-../Core/Src/i2c.c:81:12:I2C_ReadRegister	10
+../Core/Src/i2c.c:38:12:I2C_WriteRegister	1
+../Core/Src/i2c.c:44:12:I2C_WriteRegisters	13
+../Core/Src/i2c.c:89:12:I2C_ReadRegister	1
+../Core/Src/i2c.c:95:12:I2C_ReadRegisters	14
