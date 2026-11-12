@@ -1,0 +1,3 @@
+../Core/Src/lps25hb/lps25hb.c:5:16:LPS25HB_Init	32	static
+../Core/Src/lps25hb/lps25hb.c:28:16:LPS25HB_ReadPressure	32	static
+../Core/Src/lps25hb/lps25hb.c:48:7:LPS25HB_RelativeAltitude	16	static
